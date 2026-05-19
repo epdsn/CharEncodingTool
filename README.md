@@ -1,5 +1,7 @@
 # CharEncodingTool
 
+[![CI](https://github.com/epdsn/CharEncodingTool/actions/workflows/ci.yml/badge.svg)](https://github.com/epdsn/CharEncodingTool/actions/workflows/ci.yml)
+
 A Windows desktop tool for debugging string ↔ byte conversions when talking to
 hardware/devices over an API. Built as a hands-on deep dive into how text
 encodings actually lay bytes on the wire.
