@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CharEncodingTool.App/CharEncodingTool.App.csproj" />
+    <Project Path="src/CharEncodingTool.Core/CharEncodingTool.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CharEncodingTool.Core.Tests/CharEncodingTool.Core.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,11 @@
+<Application x:Class="CharEncodingTool.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:CharEncodingTool.App"
+             xmlns:conv="clr-namespace:CharEncodingTool.App.Converters"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <conv:EnumToBoolConverter x:Key="EnumToBool"/>
+        <conv:NonEmptyToVisibilityConverter x:Key="NonEmptyToVisibility"/>
+    </Application.Resources>
+</Application>
