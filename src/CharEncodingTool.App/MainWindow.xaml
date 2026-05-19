@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:CharEncodingTool.App"
         xmlns:vm="clr-namespace:CharEncodingTool.App.ViewModels"
         mc:Ignorable="d"
-        Title="Character Encoding Tool" Height="700" Width="1100"
+        Title="Character Encoding Tool" Height="780" Width="1200"
         FontFamily="Segoe UI" FontSize="13">
     <Window.Resources>
         <Style TargetType="TextBlock" x:Key="MonoText">
@@ -23,54 +23,84 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,2"/>
         </Style>
+        <Style TargetType="DataGrid" x:Key="ResultGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="AlternatingRowBackground" Value="#F6F6F6"/>
+            <Setter Property="RowHeight" Value="32"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="MonoCell">
+            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="LearnBody">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="LearnH2">
+            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,16,0,6"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="LearnH3">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,10,0,4"/>
+        </Style>
     </Window.Resources>
 
     <TabControl Margin="8">
         <!-- =================== Side-by-side comparison =================== -->
-        <TabItem Header="Compare encodings">
-            <DockPanel DataContext="{Binding Comparison}" LastChildFill="True" Margin="6">
-                <StackPanel DockPanel.Dock="Top">
-                    <Label Content="Input string"/>
+        <TabItem Header="Compare">
+            <Grid DataContext="{Binding Comparison}" Margin="6">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="2*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0">
+                    <Label Content="Input"/>
                     <TextBox Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource MonoBox}"
-                             MinHeight="48"
-                             MaxHeight="120"/>
-                    <TextBlock Margin="0,4,0,8" Foreground="#555">
-                        Type any text. Each encoding shows the bytes it would emit when sending this string.
-                        BOM-prefixed flavours include the BOM in the output.
-                    </TextBlock>
+                             MinHeight="48" MaxHeight="100"/>
                 </StackPanel>
 
-                <DataGrid ItemsSource="{Binding Results}"
-                          AutoGenerateColumns="False"
-                          CanUserAddRows="False"
-                          CanUserDeleteRows="False"
-                          IsReadOnly="True"
-                          HeadersVisibility="Column"
-                          GridLinesVisibility="Horizontal"
-                          RowHeight="34"
-                          AlternatingRowBackground="#F6F6F6">
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Interpret escapes (\0, \n, \xFF, é, \U0001F389)"
+                              IsChecked="{Binding InterpretEscapes}" VerticalAlignment="Center"/>
+                    <CheckBox Content="Show control characters (␀ ␊ ␉ …)"
+                              IsChecked="{Binding ShowControlChars}" VerticalAlignment="Center" Margin="20,0,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                    <TextBlock Text="Effective input:" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding EffectivePreview}"
+                               Style="{StaticResource MonoCell}"
+                               Margin="6,0,0,0"
+                               Foreground="#333"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="3" Margin="0,10,0,4" FontWeight="SemiBold" Text="Bytes by encoding"/>
+                <DataGrid Grid.Row="4"
+                          Style="{StaticResource ResultGrid}"
+                          ItemsSource="{Binding Results}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Encoding" Binding="{Binding Descriptor.DisplayName}" Width="160"/>
                         <DataGridTextColumn Header="Bytes" Binding="{Binding ByteCount}" Width="60"/>
-                        <DataGridTextColumn Header="Hex" Binding="{Binding HexSpaced}" Width="*">
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New"/>
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Header="Base64" Binding="{Binding Base64}" Width="200">
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New"/>
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Hex" Binding="{Binding HexSpaced}" Width="*"
+                                            ElementStyle="{StaticResource MonoCell}"/>
+                        <DataGridTextColumn Header="Base64" Binding="{Binding Base64}" Width="200"
+                                            ElementStyle="{StaticResource MonoCell}"/>
                         <DataGridTextColumn Header="Notes" Binding="{Binding Descriptor.Notes}" Width="260">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
@@ -82,7 +112,29 @@
                         </DataGridTextColumn>
                     </DataGrid.Columns>
                 </DataGrid>
-            </DockPanel>
+
+                <TextBlock Grid.Row="5" Margin="0,12,0,4" FontWeight="SemiBold"
+                           Text="Per-code-point breakdown"/>
+                <DataGrid Grid.Row="6"
+                          Style="{StaticResource ResultGrid}"
+                          ItemsSource="{Binding CodePoints}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Glyph" Binding="{Binding GlyphDisplay}" Width="60"
+                                            ElementStyle="{StaticResource MonoCell}"/>
+                        <DataGridTextColumn Header="Code point" Binding="{Binding UnicodeNotation}" Width="100"
+                                            ElementStyle="{StaticResource MonoCell}"/>
+                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="160"/>
+                        <DataGridTextColumn Header="UTF-8" Binding="{Binding Utf8Hex}" Width="*"
+                                            ElementStyle="{StaticResource MonoCell}"/>
+                        <DataGridTextColumn Header="UTF-16 LE" Binding="{Binding Utf16LeHex}" Width="120"
+                                            ElementStyle="{StaticResource MonoCell}"/>
+                        <DataGridTextColumn Header="UTF-16 BE" Binding="{Binding Utf16BeHex}" Width="120"
+                                            ElementStyle="{StaticResource MonoCell}"/>
+                        <DataGridTextColumn Header="UTF-32 LE" Binding="{Binding Utf32LeHex}" Width="160"
+                                            ElementStyle="{StaticResource MonoCell}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
         </TabItem>
 
         <!-- =================== Two-way converter =================== -->
@@ -114,7 +166,6 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- String → Bytes -->
                     <DockPanel Grid.Column="0">
                         <TextBlock DockPanel.Dock="Top" Text="String → Bytes" FontWeight="Bold" FontSize="15" Margin="0,0,0,6"/>
                         <Label DockPanel.Dock="Top" Content="String input"/>
@@ -130,7 +181,6 @@
                                  IsReadOnly="True" Background="#F8F8F8"/>
                     </DockPanel>
 
-                    <!-- Bytes → String -->
                     <DockPanel Grid.Column="2">
                         <TextBlock DockPanel.Dock="Top" Text="Bytes → String" FontWeight="Bold" FontSize="15" Margin="0,0,0,6"/>
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,4">
@@ -164,6 +214,155 @@
                     <TextBlock Text="{Binding ErrorMessage}" Foreground="#A33"/>
                 </Border>
             </Grid>
+        </TabItem>
+
+        <!-- =================== Learn =================== -->
+        <TabItem Header="Learn">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="14">
+                <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+                    <TextBlock Text="Character encodings — a working reference" FontSize="22" FontWeight="Bold" Margin="0,0,0,12"/>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        Strings are characters; bytes are what you actually put on the wire. An encoding is the
+                        rule that turns one into the other. Different encodings produce different bytes for the
+                        same string — that's the source of most "weird characters" bugs in device APIs.
+                    </TextBlock>
+
+                    <TextBlock Style="{StaticResource LearnH2}" Text="The vocabulary"/>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        <Run FontWeight="SemiBold">Code point.</Run>
+                        A number that identifies a character in the Unicode standard, written as
+                        <Run FontFamily="Cascadia Mono, Consolas">U+XXXX</Run>. Examples: A is U+0041, é is U+00E9,
+                        🎉 is U+1F389. Unicode has space for ~1.1 million code points; about 150,000 are assigned today.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        <Run FontWeight="SemiBold">Code unit.</Run>
+                        The smallest piece an encoding works with: 8 bits for UTF-8, 16 bits for UTF-16, 32 bits for UTF-32.
+                        One code point may take 1, 2, 3, or 4 code units depending on the encoding.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        <Run FontWeight="SemiBold">Byte.</Run>
+                        Eight bits. The thing your device actually sees. UTF-8 code units are bytes; UTF-16 code units
+                        are two bytes each, so you also need to know the byte order (endianness).
+                    </TextBlock>
+
+                    <TextBlock Style="{StaticResource LearnH2}" Text="ASCII"/>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        7-bit, 128 code points (U+0000 through U+007F). One byte per character, with the top bit always 0.
+                        Any code point above U+007F is replaced with <Run FontFamily="Cascadia Mono, Consolas">?</Run> (0x3F) when encoding.
+                        Don't use ASCII for anything containing accented characters, emoji, or non-Latin scripts — you'll silently lose data.
+                    </TextBlock>
+
+                    <TextBlock Style="{StaticResource LearnH2}" Text="UTF-8"/>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        Variable length, 1–4 bytes per code point. The encoding is self-synchronising — you can drop
+                        bytes anywhere and the decoder can recover at the next code-point boundary. The default for HTTP,
+                        JSON, and the web.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnH3}" Text="Length rules"/>
+                    <TextBlock Style="{StaticResource MonoCell}" Margin="0,0,0,8">
+                        U+0000   – U+007F     1 byte    0xxxxxxx<LineBreak/>
+                        U+0080   – U+07FF     2 bytes   110xxxxx 10xxxxxx<LineBreak/>
+                        U+0800   – U+FFFF     3 bytes   1110xxxx 10xxxxxx 10xxxxxx<LineBreak/>
+                        U+10000  – U+10FFFF   4 bytes   11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        ASCII characters (U+0000–U+007F) encode to exactly their ASCII byte. That's why
+                        <Run FontFamily="Cascadia Mono, Consolas">"Hello"</Run> is identical in ASCII and UTF-8.
+                        Non-ASCII characters always start with a byte ≥ 0xC0 followed by continuation bytes 0x80–0xBF.
+                    </TextBlock>
+
+                    <TextBlock Style="{StaticResource LearnH2}" Text="UTF-16 and surrogate pairs"/>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        Every code point in the Basic Multilingual Plane (U+0000–U+FFFF) is exactly 2 bytes. Code points
+                        above U+FFFF (emoji, rare CJK, etc.) take 4 bytes via a <Run FontStyle="Italic">surrogate pair</Run>:
+                        a value in U+D800–U+DBFF (high surrogate) followed by U+DC00–U+DFFF (low surrogate). The range
+                        U+D800–U+DFFF is reserved exclusively for this and is never assigned to real characters.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        Endianness matters: UTF-16 LE writes the low byte first (so <Run FontFamily="Cascadia Mono, Consolas">A</Run>
+                        becomes <Run FontFamily="Cascadia Mono, Consolas">41 00</Run>); UTF-16 BE writes the high byte first
+                        (<Run FontFamily="Cascadia Mono, Consolas">00 41</Run>). BE is network byte order; LE is what Intel/AMD CPUs use natively.
+                    </TextBlock>
+
+                    <TextBlock Style="{StaticResource LearnH2}" Text="UTF-32"/>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        Always 4 bytes per code point. Indexing is trivial (byte offset = code point index × 4) but it
+                        wastes a lot of space — most text is mostly ASCII. Almost never used on the wire; sometimes used
+                        internally when random-access by code point matters.
+                    </TextBlock>
+
+                    <TextBlock Style="{StaticResource LearnH2}" Text="BOMs (byte order marks)"/>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        A short byte sequence at the start of a stream that tells the reader which encoding it is and
+                        (for UTF-16/32) which byte order.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource MonoCell}" Margin="0,0,0,8">
+                        UTF-8 BOM       EF BB BF<LineBreak/>
+                        UTF-16 LE BOM   FF FE<LineBreak/>
+                        UTF-16 BE BOM   FE FF<LineBreak/>
+                        UTF-32 LE BOM   FF FE 00 00<LineBreak/>
+                        UTF-32 BE BOM   00 00 FE FF
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        UTF-8 doesn't actually need a BOM (there's no byte order to mark) and most HTTP/JSON APIs will
+                        reject input that starts with one. UTF-16 and UTF-32 benefit from a BOM because endianness is otherwise ambiguous.
+                    </TextBlock>
+
+                    <TextBlock Style="{StaticResource LearnH2}" Text="U+0000 and the null-termination gotcha"/>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        <Run FontWeight="SemiBold">U+0000 (NUL)</Run> is a real Unicode code point. It encodes as:
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource MonoCell}" Margin="0,0,0,8">
+                        ASCII       00<LineBreak/>
+                        UTF-8       00<LineBreak/>
+                        UTF-16 LE   00 00<LineBreak/>
+                        UTF-16 BE   00 00<LineBreak/>
+                        UTF-32 LE   00 00 00 00<LineBreak/>
+                        UTF-32 BE   00 00 00 00
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        In C and most low-level protocols, strings are <Run FontStyle="Italic">null-terminated</Run>: the
+                        reader keeps reading bytes until it hits 0x00, then stops. Two bugs you'll see in device API work:
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}" Margin="14,0,0,8">
+                        • An embedded U+0000 in your payload will truncate the string for a C-style reader.<LineBreak/>
+                        • <Run FontWeight="SemiBold">UTF-16 is dangerous around null-termination.</Run>
+                        <Run FontFamily="Cascadia Mono, Consolas">"A"</Run> in UTF-16 LE is
+                        <Run FontFamily="Cascadia Mono, Consolas">41 00</Run> — a C reader sees the
+                        <Run FontFamily="Cascadia Mono, Consolas">00</Run> after one byte and thinks the string is done.
+                        Protocols that use UTF-16 typically prefix the length instead.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        <Run FontWeight="SemiBold">Modified UTF-8.</Run> Java's class files and Android's DEX format use a
+                        variant called Modified UTF-8 that encodes U+0000 as the two-byte <Run FontFamily="Cascadia Mono, Consolas">C0 80</Run>
+                        instead of <Run FontFamily="Cascadia Mono, Consolas">00</Run>. This is technically an overlong
+                        encoding and invalid under strict UTF-8 — but it lets the format embed NUL code points in null-terminated string fields.
+                    </TextBlock>
+
+                    <TextBlock Style="{StaticResource LearnH2}" Text="Using this tool"/>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        • The <Run FontWeight="SemiBold">Compare</Run> tab encodes whatever you type with every supported
+                        encoding at once. Use it to spot which encoding your device expects.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        • Turn on <Run FontWeight="SemiBold">Interpret escapes</Run> to type control characters using
+                        C-style escapes:
+                        <Run FontFamily="Cascadia Mono, Consolas">\0</Run>, <Run FontFamily="Cascadia Mono, Consolas">\n</Run>,
+                        <Run FontFamily="Cascadia Mono, Consolas">\t</Run>, <Run FontFamily="Cascadia Mono, Consolas">\xFF</Run>,
+                        <Run FontFamily="Cascadia Mono, Consolas">é</Run>, <Run FontFamily="Cascadia Mono, Consolas">\U0001F389</Run>.
+                        Try <Run FontFamily="Cascadia Mono, Consolas">\0</Run> and watch the byte counts: 1 in ASCII/UTF-8, 2 in UTF-16, 4 in UTF-32.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        • The <Run FontWeight="SemiBold">per-code-point breakdown</Run> at the bottom of Compare shows
+                        each code point and its bytes in each encoding side-by-side. Watch how
+                        <Run FontFamily="Cascadia Mono, Consolas">🎉</Run> is one code point but produces four UTF-16 LE bytes (surrogate pair).
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        • The <Run FontWeight="SemiBold">Convert</Run> tab is for the reverse case: you have a hex dump
+                        off the wire and want to know what text it represents. Pick the encoding the device uses, paste, decode.
+                    </TextBlock>
+                </StackPanel>
+            </ScrollViewer>
         </TabItem>
     </TabControl>
 </Window>
