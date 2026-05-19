@@ -34,7 +34,8 @@ public static class CodePointAnalyzer
                 Utf8Hex:    ByteFormatter.ToHexSpaced(utf8.GetBytes(glyph)),
                 Utf16LeHex: ByteFormatter.ToHexSpaced(utf16Le.GetBytes(glyph)),
                 Utf16BeHex: ByteFormatter.ToHexSpaced(utf16Be.GetBytes(glyph)),
-                Utf32LeHex: ByteFormatter.ToHexSpaced(utf32Le.GetBytes(glyph))));
+                Utf32LeHex: ByteFormatter.ToHexSpaced(utf32Le.GetBytes(glyph)),
+                Utf8Bits:   Utf8BitPattern.For(codePoint)));
 
             i += charsConsumed;
         }

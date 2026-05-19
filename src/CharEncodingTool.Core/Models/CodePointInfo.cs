@@ -11,4 +11,5 @@ public sealed record CodePointInfo(
     string Utf8Hex,
     string Utf16LeHex,
     string Utf16BeHex,
-    string Utf32LeHex);
+    string Utf32LeHex,
+    IReadOnlyList<Utf8BitsByte> Utf8Bits);

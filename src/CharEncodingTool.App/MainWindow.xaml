@@ -153,14 +153,35 @@
                                             ElementStyle="{StaticResource MonoCell}"/>
                         <DataGridTextColumn Header="Code point" Binding="{Binding UnicodeNotation}" Width="100"
                                             ElementStyle="{StaticResource MonoCell}"/>
-                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="160"/>
-                        <DataGridTextColumn Header="UTF-8" Binding="{Binding Utf8Hex}" Width="*"
+                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="140"/>
+                        <DataGridTextColumn Header="UTF-8" Binding="{Binding Utf8Hex}" Width="110"
                                             ElementStyle="{StaticResource MonoCell}"/>
-                        <DataGridTextColumn Header="UTF-16 LE" Binding="{Binding Utf16LeHex}" Width="120"
+                        <DataGridTemplateColumn Header="UTF-8 bits (marker | payload)" Width="*" MinWidth="220">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ItemsControl ItemsSource="{Binding Utf8Bits}" VerticalAlignment="Center">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Margin="0,0,10,0"
+                                                           FontFamily="Cascadia Mono, Consolas, Courier New">
+                                                    <Run Text="{Binding MarkerBits}" Foreground="#A0A0A0"/><Run Text="{Binding PayloadBits}" Foreground="#1B5E20" FontWeight="Bold"/>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="UTF-16 LE" Binding="{Binding Utf16LeHex}" Width="110"
                                             ElementStyle="{StaticResource MonoCell}"/>
-                        <DataGridTextColumn Header="UTF-16 BE" Binding="{Binding Utf16BeHex}" Width="120"
+                        <DataGridTextColumn Header="UTF-16 BE" Binding="{Binding Utf16BeHex}" Width="110"
                                             ElementStyle="{StaticResource MonoCell}"/>
-                        <DataGridTextColumn Header="UTF-32 LE" Binding="{Binding Utf32LeHex}" Width="160"
+                        <DataGridTextColumn Header="UTF-32 LE" Binding="{Binding Utf32LeHex}" Width="140"
                                             ElementStyle="{StaticResource MonoCell}"/>
                     </DataGrid.Columns>
                 </DataGrid>
@@ -417,6 +438,14 @@
                         ASCII characters (U+0000–U+007F) encode to exactly their ASCII byte. That's why
                         <Run FontFamily="Cascadia Mono, Consolas">"Hello"</Run> is identical in ASCII and UTF-8.
                         Non-ASCII characters always start with a byte ≥ 0xC0 followed by continuation bytes 0x80–0xBF.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        The <Run FontWeight="SemiBold">UTF-8 bits</Run> column in the Compare tab's per-code-point
+                        breakdown shows these templates filled in for each code point. Marker bits are
+                        <Run Foreground="#A0A0A0">grey</Run>; payload bits (the actual code-point bits) are
+                        <Run Foreground="#1B5E20" FontWeight="Bold">green</Run>. Try
+                        <Run FontFamily="Cascadia Mono, Consolas">🎉</Run> — you'll see the 21-bit code point
+                        slotted across the four-byte template's 3+6+6+6 payload positions.
                     </TextBlock>
 
                     <TextBlock Style="{StaticResource LearnH2}" Text="UTF-16 and surrogate pairs"/>
