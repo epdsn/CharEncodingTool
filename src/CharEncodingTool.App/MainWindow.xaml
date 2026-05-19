@@ -52,6 +52,23 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,10,0,4"/>
         </Style>
+
+        <ContextMenu x:Key="EncodingRowMenu" x:Shared="False"
+                     DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+            <MenuItem Header="Copy hex (spaced)"    Tag="{Binding HexSpaced}"      Click="CopyToClipboard_Click"/>
+            <MenuItem Header="Copy hex (compact)"   Tag="{Binding HexCompact}"     Click="CopyToClipboard_Click"/>
+            <MenuItem Header="Copy Base64"          Tag="{Binding Base64}"         Click="CopyToClipboard_Click"/>
+            <MenuItem Header="Copy percent-encoded" Tag="{Binding PercentEncoded}" Click="CopyToClipboard_Click"/>
+        </ContextMenu>
+
+        <ContextMenu x:Key="CodePointRowMenu" x:Shared="False"
+                     DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+            <MenuItem Header="Copy code point (U+XXXX)" Tag="{Binding UnicodeNotation}" Click="CopyToClipboard_Click"/>
+            <MenuItem Header="Copy UTF-8 bytes"         Tag="{Binding Utf8Hex}"         Click="CopyToClipboard_Click"/>
+            <MenuItem Header="Copy UTF-16 LE bytes"     Tag="{Binding Utf16LeHex}"      Click="CopyToClipboard_Click"/>
+            <MenuItem Header="Copy UTF-16 BE bytes"     Tag="{Binding Utf16BeHex}"      Click="CopyToClipboard_Click"/>
+            <MenuItem Header="Copy UTF-32 LE bytes"     Tag="{Binding Utf32LeHex}"      Click="CopyToClipboard_Click"/>
+        </ContextMenu>
     </Window.Resources>
 
     <TabControl Margin="8">
@@ -80,6 +97,9 @@
                               IsChecked="{Binding InterpretEscapes}" VerticalAlignment="Center"/>
                     <CheckBox Content="Show control characters (␀ ␊ ␉ …)"
                               IsChecked="{Binding ShowControlChars}" VerticalAlignment="Center" Margin="20,0,0,0"/>
+                    <CheckBox Content="Append null terminator (\0)"
+                              IsChecked="{Binding AppendNullTerminator}" VerticalAlignment="Center" Margin="20,0,0,0"
+                              ToolTip="Appends U+0000 to the input before encoding. Width of the trailing null bytes depends on the encoding (1, 2, or 4 bytes)."/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
@@ -94,6 +114,11 @@
                 <DataGrid Grid.Row="4"
                           Style="{StaticResource ResultGrid}"
                           ItemsSource="{Binding Results}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="ContextMenu" Value="{StaticResource EncodingRowMenu}"/>
+                        </Style>
+                    </DataGrid.RowStyle>
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Encoding" Binding="{Binding Descriptor.DisplayName}" Width="160"/>
                         <DataGridTextColumn Header="Bytes" Binding="{Binding ByteCount}" Width="60"/>
@@ -114,10 +139,15 @@
                 </DataGrid>
 
                 <TextBlock Grid.Row="5" Margin="0,12,0,4" FontWeight="SemiBold"
-                           Text="Per-code-point breakdown"/>
+                           Text="Per-code-point breakdown (right-click a row to copy)"/>
                 <DataGrid Grid.Row="6"
                           Style="{StaticResource ResultGrid}"
                           ItemsSource="{Binding CodePoints}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="ContextMenu" Value="{StaticResource CodePointRowMenu}"/>
+                        </Style>
+                    </DataGrid.RowStyle>
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Glyph" Binding="{Binding GlyphDisplay}" Width="60"
                                             ElementStyle="{StaticResource MonoCell}"/>
@@ -175,7 +205,15 @@
                         <Button DockPanel.Dock="Top" Content="Encode →"
                                 Command="{Binding EncodeStringToBytesCommand}"
                                 Width="120" HorizontalAlignment="Left" Margin="0,8,0,8" Padding="8,4"/>
-                        <Label DockPanel.Dock="Top" Content="Bytes (hex, space-separated)"/>
+                        <Grid DockPanel.Dock="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Bytes (hex, space-separated)"/>
+                            <Button Grid.Column="1" Content="Copy" Padding="8,2" Margin="0,0,0,2"
+                                    Tag="{Binding BytesOutput}" Click="CopyToClipboard_Click"/>
+                        </Grid>
                         <TextBox Style="{StaticResource MonoBox}"
                                  Text="{Binding BytesOutput, Mode=OneWay}"
                                  IsReadOnly="True" Background="#F8F8F8"/>
@@ -197,7 +235,15 @@
                         <Button DockPanel.Dock="Top" Content="Decode →"
                                 Command="{Binding DecodeBytesToStringCommand}"
                                 Width="120" HorizontalAlignment="Left" Margin="0,8,0,8" Padding="8,4"/>
-                        <Label DockPanel.Dock="Top" Content="Decoded string"/>
+                        <Grid DockPanel.Dock="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Decoded string"/>
+                            <Button Grid.Column="1" Content="Copy" Padding="8,2" Margin="0,0,0,2"
+                                    Tag="{Binding StringOutput}" Click="CopyToClipboard_Click"/>
+                        </Grid>
                         <TextBox Style="{StaticResource MonoBox}"
                                  Text="{Binding StringOutput, Mode=OneWay}"
                                  IsReadOnly="True" Background="#F8F8F8"/>
@@ -213,6 +259,108 @@
                         Visibility="{Binding ErrorMessage, Converter={StaticResource NonEmptyToVisibility}}">
                     <TextBlock Text="{Binding ErrorMessage}" Foreground="#A33"/>
                 </Border>
+            </Grid>
+        </TabItem>
+
+        <!-- =================== Inspect =================== -->
+        <TabItem Header="Inspect">
+            <Grid DataContext="{Binding Inspect}" Margin="6">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" TextWrapping="Wrap" Margin="0,0,0,8" Foreground="#555">
+                    Paste raw bytes and check whether they form a valid string under a given encoding.
+                    Useful for diagnosing "weird characters" coming off the wire — UTF-8 with a bad
+                    continuation byte, UTF-16 with a lone surrogate, "Modified UTF-8" NUL bytes, etc.
+                </TextBlock>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Label Content="Encoding:" VerticalAlignment="Center"/>
+                    <ComboBox ItemsSource="{Binding Encodings}"
+                              SelectedItem="{Binding SelectedEncoding}"
+                              DisplayMemberPath="DisplayName"
+                              Width="220" Margin="6,0,16,0"/>
+                    <Label Content="Input format:" VerticalAlignment="Center"/>
+                    <RadioButton Content="Hex" GroupName="InspectFmt" Margin="6,0,8,0" VerticalAlignment="Center"
+                                 IsChecked="{Binding BytesInputFormat, Converter={StaticResource EnumToBool}, ConverterParameter=Hex}"/>
+                    <RadioButton Content="Base64" GroupName="InspectFmt" VerticalAlignment="Center"
+                                 IsChecked="{Binding BytesInputFormat, Converter={StaticResource EnumToBool}, ConverterParameter=Base64}"/>
+                </StackPanel>
+
+                <Label Grid.Row="2" Content="Bytes"/>
+                <TextBox Grid.Row="3" Style="{StaticResource MonoBox}"
+                         Text="{Binding BytesInput, UpdateSourceTrigger=PropertyChanged}"
+                         MinHeight="60" MaxHeight="120"/>
+
+                <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,8,0,8">
+                    <Button Content="Inspect" Command="{Binding InspectCommand}" Width="100" Padding="8,4"/>
+                    <Button Content="Bad UTF-8 (C3 28)" Command="{Binding LoadInvalidUtf8ExampleCommand}"
+                            Margin="14,0,6,0" Padding="8,4"
+                            ToolTip="Loads a UTF-8 sequence with an invalid continuation byte."/>
+                    <Button Content="Modified-UTF-8 NUL (C0 80)" Command="{Binding LoadModifiedUtf8NullExampleCommand}"
+                            Margin="0,0,6,0" Padding="8,4"
+                            ToolTip="Loads Java/DEX-style overlong NUL encoding — invalid under strict UTF-8."/>
+                    <Button Content="Lone surrogate (3C D8)" Command="{Binding LoadLoneSurrogateExampleCommand}"
+                            Padding="8,4"
+                            ToolTip="Loads a high surrogate with no low surrogate following it — invalid UTF-16."/>
+                </StackPanel>
+
+                <Border Grid.Row="5" Padding="10,6" Margin="0,0,0,10" CornerRadius="2">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFF4F4"/>
+                            <Setter Property="BorderBrush" Value="#E0B4B4"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasResult}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsValid}" Value="True">
+                                    <Setter Property="Background" Value="#EFFAEF"/>
+                                    <Setter Property="BorderBrush" Value="#B4E0B4"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold"/>
+                </Border>
+
+                <StackPanel Grid.Row="6">
+                    <StackPanel Visibility="{Binding Decoded, Converter={StaticResource NonEmptyToVisibility}}" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Content="Decoded string"/>
+                            <Button Grid.Column="1" Content="Copy" Padding="8,2" Margin="0,0,0,2"
+                                    Tag="{Binding Decoded}" Click="CopyToClipboard_Click"/>
+                        </Grid>
+                        <TextBox Style="{StaticResource MonoBox}"
+                                 Text="{Binding Decoded, Mode=OneWay}"
+                                 IsReadOnly="True" Background="#F8F8F8"
+                                 MinHeight="60" MaxHeight="160"/>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding ErrorMessage, Converter={StaticResource NonEmptyToVisibility}}">
+                        <Label Content="Where the bytes break"/>
+                        <Border BorderBrush="#DDD" BorderThickness="1" Background="#FAFAFA" Padding="10,8" CornerRadius="2">
+                            <TextBlock TextWrapping="Wrap" FontSize="15">
+                                <TextBlock.FontFamily>Cascadia Mono, Consolas, Courier New</TextBlock.FontFamily>
+                                <Run Text="{Binding PreErrorHex, Mode=OneWay}"/><Run Text="{Binding ErrorHex, Mode=OneWay}" Background="#FFD7D7" Foreground="#A33" FontWeight="Bold"/><Run Text="{Binding PostErrorHex, Mode=OneWay}"/>
+                            </TextBlock>
+                        </Border>
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#A33" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
             </Grid>
         </TabItem>
 
@@ -360,6 +508,16 @@
                     <TextBlock Style="{StaticResource LearnBody}">
                         • The <Run FontWeight="SemiBold">Convert</Run> tab is for the reverse case: you have a hex dump
                         off the wire and want to know what text it represents. Pick the encoding the device uses, paste, decode.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        • The <Run FontWeight="SemiBold">Inspect</Run> tab does strict validation: it tells you whether a
+                        byte sequence is well-formed under a given encoding and, if not, points at the exact byte that
+                        broke. Use the seed buttons (<Run FontFamily="Cascadia Mono, Consolas">C3 28</Run>, Modified-UTF-8
+                        NUL, lone surrogate) to see common failure modes.
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource LearnBody}">
+                        • <Run FontWeight="SemiBold">Right-click any row</Run> in the byte tables to copy hex, Base64,
+                        or per-encoding bytes for a single code point to the clipboard.
                     </TextBlock>
                 </StackPanel>
             </ScrollViewer>

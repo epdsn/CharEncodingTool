@@ -17,6 +17,9 @@ public partial class ComparisonViewModel : ObservableObject
     public partial bool ShowControlChars { get; set; } = true;
 
     [ObservableProperty]
+    public partial bool AppendNullTerminator { get; set; }
+
+    [ObservableProperty]
     public partial string EffectivePreview { get; set; } = string.Empty;
 
     public ObservableCollection<EncodingResult> Results { get; } = new();
@@ -29,10 +32,16 @@ public partial class ComparisonViewModel : ObservableObject
 
     partial void OnInputTextChanged(string value) => Refresh();
     partial void OnInterpretEscapesChanged(bool value) => Refresh();
+    partial void OnAppendNullTerminatorChanged(bool value) => Refresh();
     partial void OnShowControlCharsChanged(bool value) => UpdatePreview(GetEffectiveInput());
 
-    private string GetEffectiveInput() =>
-        InterpretEscapes ? EscapeSequenceParser.Parse(InputText ?? string.Empty) : (InputText ?? string.Empty);
+    private string GetEffectiveInput()
+    {
+        var parsed = InterpretEscapes
+            ? EscapeSequenceParser.Parse(InputText ?? string.Empty)
+            : (InputText ?? string.Empty);
+        return AppendNullTerminator ? parsed + "\0" : parsed;
+    }
 
     private void UpdatePreview(string effective) =>
         EffectivePreview = ShowControlChars ? ControlCharRenderer.Render(effective) : effective;

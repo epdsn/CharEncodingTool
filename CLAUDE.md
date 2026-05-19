@@ -48,7 +48,9 @@ without WPF dependencies should be in Core.
 ## Where the encoding logic lives
 
 - `EncodingCatalog` — the registry of supported encodings. Add new encodings
-  here; do **not** instantiate `Encoding` objects directly elsewhere.
+  here; do **not** instantiate `Encoding` objects directly elsewhere. Registers
+  `CodePagesEncodingProvider` so legacy single-byte code pages (Windows-1252,
+  ISO-8859-1, IBM437) are available via `Encoding.GetEncoding`.
 - `EncodingService` — encode/decode operations. Owns BOM preamble emission
   (BOM is not part of `Encoding.GetBytes` output in .NET; we prepend it manually
   to match the configured `byteOrderMark` flag).
@@ -61,6 +63,10 @@ without WPF dependencies should be in Core.
 - `CodePointAnalyzer` — splits a string into Unicode code points (handling
   surrogate pairs correctly) and returns the bytes each one produces in every
   encoding.
+- `ByteValidator` — strict-decode a byte sequence under a given encoding;
+  returns `ValidationResult` with `IsValid`, `ErrorByteIndex`, and a descriptive
+  message. Clones the encoding so we can swap in `DecoderFallback.ExceptionFallback`
+  without mutating the shared instance.
 
 ## UI conventions
 
@@ -69,6 +75,13 @@ without WPF dependencies should be in Core.
 - All hex/byte text uses the `MonoCell` or `MonoBox` styles (Cascadia Mono → Consolas → Courier fallback).
 - `DataGrid` is preferred over hand-rolled `ItemsControl` for tabular data —
   the comparison view and code-point breakdown both use `ResultGrid` style.
+- **ContextMenus on DataGrid rows go in `Window.Resources`**, not inline in a
+  `Setter.Value`. WPF's XAML compiler errors out on event handlers (like
+  `Click=...`) inside `Setter.Value` with a confusing MC6007 message about
+  unrelated elements. Use `x:Shared="False"` so each row gets its own instance.
+- The clipboard helper is `CopyToClipboard_Click` in `MainWindow.xaml.cs` — it
+  reads the sender's `Tag` and copies its string value. Bind `Tag` to whatever
+  field should be copied.
 
 ## Things to avoid
 

@@ -13,14 +13,37 @@ encodings actually lay bytes on the wire.
 ## Features
 
 **Compare tab.** Type any string and see, side-by-side, what bytes every
-supported encoding produces — ASCII, UTF-8 (with and without BOM), UTF-16 LE/BE
-(with and without BOM), UTF-32 LE/BE. Each row shows byte count, hex, Base64,
-and a short note describing the encoding's behaviour.
+supported encoding produces — ASCII, UTF-8 (with and without BOM),
+UTF-16 LE/BE (with and without BOM), UTF-32 LE/BE, plus the legacy single-byte
+code pages Windows-1252, ISO-8859-1, and IBM CP437. Each row shows byte count,
+hex, Base64, and a short note describing the encoding's behaviour.
+
+Toggles:
+- **Interpret escapes** — type `\0`, `\n`, `\xFF`, `é`, `\U0001F389` and have
+  them converted to their actual characters before encoding.
+- **Show control characters** — render invisible C0 controls and DEL as
+  Unicode Control Pictures (`␀ ␊ ␉ ␡ …`).
+- **Append null terminator** — append U+0000 to the input, so the per-encoding
+  table shows the null-terminator width per encoding (1 byte for UTF-8/ASCII,
+  2 for UTF-16, 4 for UTF-32).
+
+A **per-code-point breakdown** below the per-encoding table shows each Unicode
+code point with its bytes in UTF-8 / UTF-16 LE/BE / UTF-32 LE side-by-side.
+Right-click any row to copy.
 
 **Convert tab.** Pick an encoding, then go either direction:
 - String → Bytes: type text, get hex output.
 - Bytes → String: paste hex (any common format — `48 65 6C`, `0x48,0x65,0x6C`,
   `48-65-6C`, `48656C`, `\x48\x65\x6C`) or Base64, get the decoded string.
+
+**Inspect tab.** Strict-validate a byte sequence under a given encoding. Tells
+you whether the bytes are well-formed and, if not, points at the exact byte
+that broke. Seed buttons load common failure cases: invalid UTF-8 continuation
+(`C3 28`), Modified-UTF-8 NUL (`C0 80`), lone UTF-16 surrogate.
+
+**Learn tab.** In-app reference covering vocabulary (code point vs code unit
+vs byte), each encoding's algorithm, BOMs, surrogate pairs, endianness, the
+U+0000 / null-termination gotcha, and Modified UTF-8.
 
 ## Project layout
 
